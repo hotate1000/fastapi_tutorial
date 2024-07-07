@@ -1,13 +1,22 @@
 from fastapi import FastAPI
 from enum import Enum
 from typing import Union
+from pydantic import BaseModel
 
 app = FastAPI()
 
+# 引数等の値の選択用
 class ModelName(str, Enum):
         alexnet = "alexnet"
         resnet = "resnet"
         lenet = "lenet"
+
+# リクエストボディの送付check用
+class Item(BaseModel):
+    name: str
+    description: Union[str, None] = None
+    price: float
+    tax: Union[float, None] = None
 
 @app.get("/")
 async def root():
@@ -51,3 +60,12 @@ async def read_item(skip: int=0, limit: int=10):
     ]
 
     return fake_items_db[skip: skip + limit]
+
+@app.post("/items2/")
+async def create_item(item: Item):
+    item_dict = item.model_dump()
+    if item.tax is not None:
+        price_with_tax = item.price + item.tax
+        item_dict.update({"price_with_tax": price_with_tax})
+    print(item_dict)
+    return item_dict
