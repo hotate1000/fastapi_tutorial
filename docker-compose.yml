@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  db:
+    container_name: sys_user_db
+    build:
+      context: .
+      dockerfile: ./docker/db/Dockerfile
+    platform: linux/x86_64
+    restart: always
+    ports:
+      - "5432:5432"
+    volumes:
+      - db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: sys_user
+      POSTGRES_PASSWORD: sys_password
+      POSTGRES_DB: sys_db
+
+  backend:
+    container_name: sys_user_backend
+    build:
+      context: .
+      dockerfile: ./docker/backend/Dockerfile
+    volumes:
+      - "./src:/src"
+    ports:
+      - "8000:8000"
+    tty: true
+    depends_on:
+      - db
+
+volumes:
+  db:
