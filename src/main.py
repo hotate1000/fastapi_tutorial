@@ -1,12 +1,12 @@
 import jwt
 from fastapi import FastAPI, Depends, HTTPException, Request
 import secrets
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, model_validator, ValidationError
+from typing import Dict
 
 app = FastAPI()
 
 # JWTの設定
-# ランダムなキーを生成
 SECRET_KEY = secrets.token_hex(32)
 ALGORITHM = "HS256"
 
@@ -26,10 +26,19 @@ def verify_token(token: str):
         raise HTTPException(status_code=401, detail="トークン認証エラー")
 
 
-# テスト用モデル
 class TokenData(BaseModel):
-    data: dict
+    """
+    トークンのパラメータをチェックする
+    """
+    data: Dict[str, str] = Field(..., example={"user_id": "1234", "username": "testuser"})
 
+    @model_validator(mode="before")
+    def check_data_keys(cls, values):
+        # 送付データを確認
+        data = values.get("data")
+        if "user_id" not in data or "user_name" not in data:
+            raise ValueError("user_idまたはuser_nameパラメータが存在しません。")
+        return values
 
 # トークンを生成するエンドポイント
 @app.post("/token")
