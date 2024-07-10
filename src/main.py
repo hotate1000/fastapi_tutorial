@@ -11,6 +11,26 @@ SECRET_KEY = secrets.token_hex(32)
 ALGORITHM = "HS256"
 
 
+class TokenData(BaseModel):
+    data: Dict[str, str] = Field(..., example={"user_id": "1234", "user_name": "testuser"})
+
+    @model_validator(mode="before")
+    def check_data_keys(cls, values: dict):
+        """
+        トークンのパラメータをチェックする
+
+        Parameters
+        ----------
+        values: dict
+            チェックする値
+        """
+        # 送付データを確認
+        data = values.get("data")
+        if "user_id" not in data or "user_name" not in data:
+            raise ValueError("user_idまたはuser_nameパラメータが存在しません。")
+        return values
+
+
 # トークンを生成する関数（JWSを利用）
 def create_access_token(data: dict):
     return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
@@ -25,24 +45,16 @@ def verify_token(token: str):
     except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="トークン認証エラー")
 
-
-class TokenData(BaseModel):
-    """
-    トークンのパラメータをチェックする
-    """
-    data: Dict[str, str] = Field(..., example={"user_id": "1234", "username": "testuser"})
-
-    @model_validator(mode="before")
-    def check_data_keys(cls, values):
-        # 送付データを確認
-        data = values.get("data")
-        if "user_id" not in data or "user_name" not in data:
-            raise ValueError("user_idまたはuser_nameパラメータが存在しません。")
-        return values
-
-# トークンを生成するエンドポイント
 @app.post("/token")
 def generate_token(token_data: TokenData):
+    """
+    トークンを生成する
+
+    Parameters
+    ----------
+    token_data: TokenData
+        トークンの値
+    """
     access_token = create_access_token(token_data.data)
     return {"access_token": access_token}
 
