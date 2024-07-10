@@ -1,106 +1,56 @@
-from fastapi import FastAPI, Query, Path, Body
-from enum import Enum
-from typing import Union
+import jwt
+from fastapi import FastAPI, Depends, HTTPException, Request
+import secrets
 from pydantic import BaseModel
-
 
 app = FastAPI()
 
-
-# 引数等の値の選択用
-class ModelName(str, Enum):
-        alexnet = "alexnet"
-        resnet = "resnet"
-        lenet = "lenet"
+# JWTの設定
+# ランダムなキーを生成
+SECRET_KEY = secrets.token_hex(32)
+ALGORITHM = "HS256"
 
 
-class User(BaseModel):
-    username: str
-    full_name: Union[str, None] = None
+# トークンを生成する関数（JWSを利用）
+def create_access_token(data: dict):
+    return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
 
 
-# リクエストボディの送付check用
-class Item(BaseModel):
-    name: str
-    description: Union[str, None] = None
-    price: float
-    tax: Union[float, None] = None
+# トークンを検証する関数
+def verify_token(token: str):
+    try:
+        # トークンをデコードし、検証。ペイロードを取得
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="トークン認証エラー")
 
 
+# テスト用モデル
+class TokenData(BaseModel):
+    data: dict
+
+
+# トークンを生成するエンドポイント
+@app.post("/token")
+def generate_token(token_data: TokenData):
+    access_token = create_access_token(token_data.data)
+    return {"access_token": access_token}
+
+
+# トークンを検証するエンドポイント
+@app.get("/verify-token")
+def check_token(request: Request):
+    token = request.headers.get("Authorization")
+    if token:
+        token = token.split(" ")[1]  # "Bearer " の部分を除去
+        payload = verify_token(token)
+        return {"valid": True, "payload": payload}
+    else:
+        raise HTTPException(status_code=400, detail="Authorization header missing")
+
+
+# エンドポイントの確認
 @app.get("/")
-async def root():
-    return {"message": "Hello, world!"}
-
-
-@app.get("/items/{item_id}")
-async def read_item(
-    q: Union[str, None] = None,
-    short: bool = False,
-    # PathはURLパスの一部、Queryは/?~の?以降のもの
-    item_id: int = Path(
-        title="The ID of the item to get",
-        ge=1,
-        le=1000
-    ),
-    size: float = Query(gt=0, lt=10.5),
-):
-    item = {"item_id": item_id}
-
-    if q:
-        item.update({"q": q})
-    if not short:
-        item.update({"description": "This is an amazing item that has a long description"})
-
-    return {"item_id": item_id}
-
-
-@app.put("/items2/{item_id}")
-async def update_item(item_id: int, item: Item, user: User, importance: int = Body()):
-    results = {"item_id": item_id, "item": item, "user": user, "importance": importance}
-    return results
-
-
-@app.get("/models/{model_name}")
-async def get_model(model_name: ModelName):
-    if model_name is ModelName.alexnet:
-        return {"model_name": model_name, "message": "Deep Learnging FTW!"}
-
-    if model_name.value == "lenet":
-        return {"model_name": model_name, "message": "LeCNN all the images"}
-
-    return {"model_name": model_name, "message": "Have some residuals"}
-
-
-@app.get("/files/{file_pash:path}")
-async def read_file(file_path: str):
-    return {"file_path": file_path}
-
-
-@app.get("/items/")
-async def read_item(
-    skip: int=0,
-    limit: int=10,
-    q: Union[str, None] = Query(
-        default=None,
-        min_length=3,
-        max_length=10,
-        description="説明",
-        deprecated=True)
-):
-    fake_items_db = [
-        {"item_name": "Foo"},
-        {"item_name": "Bar"},
-        {"item_item": "Baz"}
-    ]
-
-    return str(fake_items_db[skip: skip + limit]) + q
-
-
-@app.post("/items2/")
-async def create_item(item: Item):
-    item_dict = item.model_dump()
-    if item.tax is not None:
-        price_with_tax = item.price + item.tax
-        item_dict.update({"price_with_tax": price_with_tax})
-    print(item_dict)
-    return item_dict
+def read_root():
+    return {"message": "Hello World"}

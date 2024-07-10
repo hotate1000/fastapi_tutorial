@@ -25,4 +25,4 @@ RUN pip install --upgrade setuptools
 RUN pip install -r requirements.txt
 
 # コマンドの実行
-CMD ["uvicorn", "main:app", "--reload"]
+CMD ["uvicorn", "main:app", "--reload", "--host", "0.0.0.0", "--port", "50000"]

@@ -1,2 +1,6 @@
 fastapi==0.111.0
 pydantic==2.8.2
+uvicorn==0.30.1
+authlib==1.3.1 # OAuth 1、OAuth 2、およびOpenID Connectプロバイダと連携するための認証ライブラリ
+python-jose==3.3.0 # JSON Web Token (JWT)の生成、署名、検証、および解析を行うためのライブラリ
+PyJWT==2.8.0
