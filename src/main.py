@@ -26,7 +26,7 @@ class TokenData(BaseModel):
 
         Parameters
         ----------
-        values: dict
+        values: dict\n
             チェックする値
         """
         # 送付データを確認
@@ -36,34 +36,35 @@ class TokenData(BaseModel):
         return values
 
 
-@app.post("/token")
+@app.post("/token", tags=["token"])
 def generate_token(token_data: TokenData):
     """
-    トークンを生成するエンドポイント
+    トークンを生成
 
     Parameters
     ----------
-    token_data: TokenData
+    token_data: TokenData\n
         トークンの値
     """
     access_token = __create_access_token(token_data.data)
     return {"access_token": access_token}
 
 
-@app.get("/verify-token")
+@app.get("/check_token", tags=["token"])
 def check_token(
     request: Request,
     credentials: HTTPAuthorizationCredentials = Security(security)
 ):
     """
-    _summary_
+    トークンの情報を確認
 
     Parameters
     ----------
-    request: Request
-        クライアントからのリクエスト情報
-    credentials : HTTPAuthorizationCredentials, optional
-        Bearerトークンを含む認証情報を取得。Security(security)によって、認証スキームを適応
+    request: Request\n
+        クライアントからのリクエスト情報\n
+    credentials : HTTPAuthorizationCredentials, optional\n
+        Bearerトークンを含む認証情報を取得\n
+        Security(security)によって、認証スキームを適応
     """
     # トークンを取得
     token = credentials.credentials
@@ -84,7 +85,7 @@ def __create_access_token(data: dict):
 
     Parameters
     ----------
-    token: dict
+    token: dict\n
         トークン情報
     """
     return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
@@ -96,7 +97,7 @@ def verify_token(token: str):
 
     Parameters
     ----------
-    token: str
+    token: str\n
         トークンの情報
     """
     try:
