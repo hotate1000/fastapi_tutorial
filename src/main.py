@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field, model_validator
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Dict
 
+
 app = FastAPI()
 
 # JWTの設定
@@ -17,7 +18,13 @@ security = HTTPBearer()
 
 
 class TokenData(BaseModel):
-    data: Dict[str, str] = Field(..., example={"user_id": "1234", "user_name": "testuser"})
+    data: Dict[str, str] = Field(
+        ...,
+        example={
+            "user_id": "1234",
+            "user_name": "testuser"
+        }
+    )
 
     @model_validator(mode="before")
     def check_data_keys(cls, values: dict):
