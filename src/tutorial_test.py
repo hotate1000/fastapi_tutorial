@@ -1,6 +1,6 @@
 # docsについて作成
 
-from fastapi import FastAPI, Query, Path, Body, Cookie
+from fastapi import FastAPI, Query, Path, Body, Cookie, Header
 from enum import Enum
 from typing import Union, List
 from pydantic import BaseModel, Field
@@ -112,7 +112,14 @@ async def read_items3_id(
         "repeat_at": repeat_at,
         "start_process": start_process,
         "duration": duration,
-    };
+    }
 
 
+@app.get("/items4/")
+async def read_items4(ads_id: Union[str, None] = Cookie(default=None)):
+    return {"ads_id": ads_id}
 
+
+@app.get("/items5/")
+async def read_items5(user_agent: Union[str, None] = Header(default=None)):
+    return {"User-Agent": user_agent}

@@ -1,4 +1,3 @@
-import jwt
 import secrets
 from fastapi import FastAPI, HTTPException, Request, Security
 from fastapi.security import HTTPBearer
